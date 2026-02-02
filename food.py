@@ -101,7 +101,7 @@ def clean_review(english_text):
 
 # ---------- UI ----------
 st.set_page_config(
-    page_title="Food Review 🍔",
+    page_title="GBRDS Food Review",
     page_icon="🍽️",
     layout="centered"
 )
@@ -115,19 +115,12 @@ p, div {font-size: 20px;}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🍔 Food Review")
-
-st.info(
-    "🍴 Choose how tasty the food is.\n\n"
-    "🎤 Speak your review in **any language**.\n\n"
-    "✅ When recording stops, the review is **automatically saved**.\n\n"
-    "🌍 Reviews are translated into **English & Telugu** and polished by AI."
-)
+st.title("GBRDS Food Review")
 
 init_db()
 
 # ---------- RATING BUTTONS ----------
-st.subheader("🍽️ How was your food?")
+st.subheader("🍽️ How was your food? / మీ ఆహారం ఎలా ఉంది?")
 
 if "rating" not in st.session_state:
     st.session_state.rating = None
@@ -153,9 +146,9 @@ if st.session_state.rating:
 """, unsafe_allow_html=True)
 
 # ---------- VOICE INPUT ----------
-st.subheader("🎤 Speak Your Review")
+st.subheader("🎤 Speak Your Review / మీ సమీక్షను చెప్పండి")
 
-audio = st.audio_input("Press record, speak, then stop")
+audio = st.audio_input("Press record, speak, then stop / రికార్డ్ నొక్కండి, మాట్లాడండి, ఆపండి")
 
 if audio and st.session_state.rating:
     if "last_audio" not in st.session_state or audio != st.session_state.last_audio:
@@ -169,7 +162,7 @@ if audio and st.session_state.rating:
 
             save_review(st.session_state.rating, english, telugu, ai_review)
 
-        st.success("✅ Review saved!")
+        st.success("✅ Review saved! / సమీక్ష సేవ్ చేయబడింది!")
         st.session_state.rating = None
         st.rerun()
 
@@ -177,24 +170,45 @@ if audio and st.session_state.rating:
 st.divider()
 if "confirm_delete_all" not in st.session_state:
     st.session_state.confirm_delete_all = False
+if "password_entered" not in st.session_state:
+    st.session_state.password_entered = False
 
-if st.button("🗑️ Delete ALL Reviews"):
+if st.button("🗑️ Delete ALL Reviews / అన్ని సమీక్షలను తొలగించండి"):
     st.session_state.confirm_delete_all = True
+    st.session_state.password_entered = False
 
 if st.session_state.confirm_delete_all:
-    st.warning("Are you sure you want to delete ALL reviews?")
-    c1, c2 = st.columns(2)
-    if c1.button("❌ Cancel"):
-        st.session_state.confirm_delete_all = False
-        st.rerun()
-    if c2.button("✅ Yes, Delete Everything"):
-        delete_all_reviews()
-        st.session_state.confirm_delete_all = False
-        st.success("All reviews deleted.")
-        st.rerun()
+    if not st.session_state.password_entered:
+        st.warning("⚠️ Password Required / పాస్వర్డ్ అవసరం")
+        password = st.text_input("Enter password to delete all reviews / అన్ని సమీక్షలను తొలగించడానికి పాస్వర్డ్ నమోదు చేయండి:", type="password", key="delete_password")
+        
+        c1, c2 = st.columns(2)
+        if c1.button("❌ Cancel / రద్దు చేయండి", key="cancel_delete_all"):
+            st.session_state.confirm_delete_all = False
+            st.session_state.password_entered = False
+            st.rerun()
+        if c2.button("✅ Verify / ధృవీకరించండి", key="verify_password"):
+            if password == "121212":
+                st.session_state.password_entered = True
+                st.rerun()
+            else:
+                st.error("❌ Incorrect password! / తప్పు పాస్వర్డ్!")
+    else:
+        st.warning("Are you sure you want to delete ALL reviews? / మీరు నిజంగా అన్ని సమీక్షలను తొలగించాలనుకుంటున్నారా?")
+        c1, c2 = st.columns(2)
+        if c1.button("❌ Cancel / రద్దు చేయండి"):
+            st.session_state.confirm_delete_all = False
+            st.session_state.password_entered = False
+            st.rerun()
+        if c2.button("✅ Yes, Delete Everything / అవును, అన్నింటినీ తొలగించండి"):
+            delete_all_reviews()
+            st.session_state.confirm_delete_all = False
+            st.session_state.password_entered = False
+            st.success("All reviews deleted. / అన్ని సమీక్షలు తొలగించబడ్డాయి.")
+            st.rerun()
 
 # ---------- SHOW REVIEWS ----------
-st.subheader("🗣️ Reviews")
+st.subheader("🗣️ Reviews / సమీక్షలు")
 
 for rid, rating, en, te, review, time in get_reviews():
     selected = next((r for r in ratings if r['value'] == rating), None)
@@ -204,11 +218,9 @@ for rid, rating, en, te, review, time in get_reviews():
 **<span style='color:{color}; font-size:22px'>{emoji} {rating}</span>**  
 🕒 *{time}*  
 
-🇺🇸 **English:** {en}  
+🇺🇸 **English / ఆంగ్లం:** {en}  
 
-🇮🇳 **Telugu:** {te}  
-
-🤖 **AI Review:** {review}
+🇮🇳 **Telugu / తెలుగు:** {te}
 """, unsafe_allow_html=True)
 
     # ---- Delete single review ----
@@ -217,21 +229,21 @@ for rid, rating, en, te, review, time in get_reviews():
     if key_base not in st.session_state:
         st.session_state[key_base] = False
 
-    if st.button("🗑️ Delete This Review", key=f"{key_base}_btn"):
+    if st.button("🗑️ Delete This Review / ఈ సమీక్షను తొలగించండి", key=f"{key_base}_btn"):
         st.session_state[key_base] = True
 
     if st.session_state[key_base]:
-        st.warning("Are you sure you want to delete this review?")
+        st.warning("Are you sure you want to delete this review? / మీరు నిజంగా ఈ సమీక్షను తొలగించాలనుకుంటున్నారా?")
         c1, c2 = st.columns(2)
 
-        if c1.button("❌ Cancel", key=f"{key_base}_cancel"):
+        if c1.button("❌ Cancel / రద్దు చేయండి", key=f"{key_base}_cancel"):
             st.session_state[key_base] = False
             st.rerun()
 
-        if c2.button("✅ Yes, Delete", key=f"{key_base}_confirm"):
+        if c2.button("✅ Yes, Delete / అవును, తొలగించండి", key=f"{key_base}_confirm"):
             delete_review(rid)
             st.session_state[key_base] = False
-            st.success("Review deleted.")
+            st.success("Review deleted. / సమీక్ష తొలగించబడింది.")
             st.rerun()
 
     st.divider()
