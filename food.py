@@ -137,19 +137,6 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* Blue background */
-.stApp {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    background-attachment: fixed;
-}
-.main .block-container {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 10px;
-    padding: 2rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-
 /* Button styling */
 button {font-size: 24px !important; padding: 20px !important; text-align:center; border-radius: 10px !important; border: 2px solid !important; font-weight: bold !important;}
 h1 {font-size: 44px;}
@@ -282,61 +269,82 @@ if st.session_state.confirm_delete_all:
 st.divider()
 st.subheader("📊 Dashboard / డాష్బోర్డ్")
 
-reviews_data = get_reviews()
+# Dashboard verification
+if "dashboard_verified" not in st.session_state:
+    st.session_state.dashboard_verified = False
 
-if reviews_data:
-    # Calculate rating distribution
-    rating_counts = {"tasty": 0, "okay": 0, "not_tasty": 0}
-    for review in reviews_data:
-        rating = review[1]  # rating is at index 1
-        if rating in rating_counts:
-            rating_counts[rating] += 1
+if not st.session_state.dashboard_verified:
+    st.warning("🔒 Verification Required / ధృవీకరణ అవసరం")
+    verification_code = st.text_input("Enter verification code to view dashboard / డాష్బోర్డ్ను వీక్షించడానికి ధృవీకరణ కోడ్ నమోదు చేయండి:", type="password", key="dashboard_verification")
     
-    # Display distribution
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric(
-            "😋 Tasty / రుచికరంగా",
-            rating_counts["tasty"],
-            delta=None
-        )
-    
-    with col2:
-        st.metric(
-            "😐 Okay / సరాసరి",
-            rating_counts["okay"],
-            delta=None
-        )
-    
-    with col3:
-        st.metric(
-            "🤢 Not Tasty / రుచికాదు",
-            rating_counts["not_tasty"],
-            delta=None
-        )
-    
-    # Chart
-    chart_data = pd.DataFrame({
-        "Rating": ["Tasty / రుచికరంగా", "Okay / సరాసరి", "Not Tasty / రుచికాదు"],
-        "Count": [rating_counts["tasty"], rating_counts["okay"], rating_counts["not_tasty"]]
-    })
-    
-    st.bar_chart(chart_data.set_index("Rating"))
-    
-    # Common Issues Analysis
-    st.markdown("### 🔍 Common Issues / సాధారణ సమస్యలు")
-    
-    if st.button("🔄 Analyze Reviews / సమీక్షలను విశ్లేషించండి", key="analyze_btn"):
-        with st.spinner("Analyzing reviews for common issues... / సాధారణ సమస్యల కోసం సమీక్షలను విశ్లేషిస్తోంది..."):
-            common_issues = analyze_common_issues(reviews_data)
-            st.session_state.common_issues = common_issues
+    if st.button("✅ Verify / ధృవీకరించండి", key="verify_dashboard"):
+        if verification_code == "1357":
+            st.session_state.dashboard_verified = True
             st.rerun()
+        else:
+            st.error("❌ Incorrect verification code! / తప్పు ధృవీకరణ కోడ్!")
+else:
+    if st.button("🔒 Lock Dashboard / డాష్బోర్డ్ను లాక్ చేయండి", key="lock_dashboard"):
+        st.session_state.dashboard_verified = False
+        st.rerun()
     
-    if "common_issues" in st.session_state:
-        st.info(st.session_state.common_issues)
-    
-    st.divider()
+    reviews_data = get_reviews()
+
+    if reviews_data:
+        # Calculate rating distribution
+        rating_counts = {"tasty": 0, "okay": 0, "not_tasty": 0}
+        for review in reviews_data:
+            rating = review[1]  # rating is at index 1
+            if rating in rating_counts:
+                rating_counts[rating] += 1
+        
+        # Display distribution
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric(
+                "😋 Tasty / రుచికరంగా",
+                rating_counts["tasty"],
+                delta=None
+            )
+        
+        with col2:
+            st.metric(
+                "😐 Okay / సరాసరి",
+                rating_counts["okay"],
+                delta=None
+            )
+        
+        with col3:
+            st.metric(
+                "🤢 Not Tasty / రుచికాదు",
+                rating_counts["not_tasty"],
+                delta=None
+            )
+        
+        # Chart
+        chart_data = pd.DataFrame({
+            "Rating": ["Tasty / రుచికరంగా", "Okay / సరాసరి", "Not Tasty / రుచికాదు"],
+            "Count": [rating_counts["tasty"], rating_counts["okay"], rating_counts["not_tasty"]]
+        })
+        
+        st.bar_chart(chart_data.set_index("Rating"))
+        
+        # Common Issues Analysis
+        st.markdown("### 🔍 Common Issues / సాధారణ సమస్యలు")
+        
+        if st.button("🔄 Analyze Reviews / సమీక్షలను విశ్లేషించండి", key="analyze_btn"):
+            with st.spinner("Analyzing reviews for common issues... / సాధారణ సమస్యల కోసం సమీక్షలను విశ్లేషిస్తోంది..."):
+                common_issues = analyze_common_issues(reviews_data)
+                st.session_state.common_issues = common_issues
+                st.rerun()
+        
+        if "common_issues" in st.session_state:
+            st.info(st.session_state.common_issues)
+        
+        st.divider()
+    else:
+        st.info("No reviews available. / సమీక్షలు అందుబాటులో లేవు.")
 
 # ---------- SHOW REVIEWS ----------
 st.subheader("🗣️ Reviews / సమీక్షలు")
